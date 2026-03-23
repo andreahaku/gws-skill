@@ -100,10 +100,24 @@ Use the appropriate gws command. Prefer **helper commands** (`+send`, `+read`, `
 # Send an email
 gws gmail +send --to alice@example.com --subject 'Hello' --body 'Hi Alice!'
 
+# Reply to a message
+gws gmail +reply --message-id MSG_ID --body 'Thanks for the update!'
+
+# Reply all
+gws gmail +reply-all --message-id MSG_ID --body 'Sounds good to me!'
+
+# Forward a message
+gws gmail +forward --message-id MSG_ID --to colleague@company.com
+
 # Triage inbox — show unread summary
 gws gmail +triage
 
-# Watch for new emails (streaming)
+# Read a specific message (extracts body, handles base64/multipart)
+gws gmail +read --id MSG_ID
+gws gmail +read --id MSG_ID --headers        # Include From, To, Subject, Date
+gws gmail +read --id MSG_ID --html           # Return HTML instead of plain text
+
+# Watch for new emails (streaming NDJSON)
 gws gmail +watch
 ```
 
@@ -197,8 +211,11 @@ gws sheets spreadsheets create --json '{"properties": {"title": "My Sheet"}}'
 
 **Helpers:**
 ```bash
-# Show today's agenda
+# Show today's agenda (uses account timezone, cached 24h)
 gws calendar +agenda
+
+# Show agenda with specific timezone
+gws calendar +agenda --timezone Europe/Rome
 
 # Create an event
 gws calendar +insert --summary 'Team Standup' \
@@ -306,6 +323,57 @@ gws people people connections list --params '{"resourceName": "people/me", "pers
 gws people people searchContacts --params '{"query": "Alice", "readMask": "names,emailAddresses"}'
 ```
 
+### Apps Script
+
+**Helpers:**
+```bash
+# Push local files to an Apps Script project (replaces all remote files)
+gws script +push --script-id SCRIPT_ID --dir ./src
+```
+
+**Raw API:**
+```bash
+# List Apps Script projects
+gws apps-script projects list
+
+# Get project content
+gws apps-script projects getContent --params '{"scriptId": "SCRIPT_ID"}'
+
+# Run a function
+gws apps-script scripts run --params '{"scriptId": "SCRIPT_ID"}' --json '{"function": "myFunction"}'
+```
+
+### Events (Workspace Events API)
+
+**Helpers:**
+```bash
+# Subscribe to Workspace events (streaming NDJSON)
+gws events +subscribe
+
+# Renew/reactivate subscriptions
+gws events +renew
+```
+
+### Google Keep
+
+```bash
+# List notes
+gws keep notes list
+
+# Get a note
+gws keep notes get --params '{"name": "notes/NOTE_ID"}'
+```
+
+### Google Meet
+
+```bash
+# List conference records
+gws meet conferenceRecords list
+
+# Get meeting details
+gws meet conferenceRecords get --params '{"name": "conferenceRecords/REC_ID"}'
+```
+
 ### Admin (Workspace Admin)
 
 ```bash
@@ -317,6 +385,9 @@ gws admin users get --params '{"userKey": "user@company.com"}'
 
 # List groups
 gws admin groups list --params '{"domain": "company.com"}'
+
+# Audit logs
+gws admin-reports activities list --params '{"userKey": "all", "applicationName": "login"}'
 ```
 
 ---
@@ -473,6 +544,102 @@ visibility and control over what's being executed.
 
 ---
 
+## Shell Gotchas
+
+**Sheets ranges with `!`:** Bash/zsh interpret `!` as history expansion. Always use single quotes:
+```bash
+# CORRECT
+gws sheets +read --spreadsheet ID --range 'Sheet1!A1:D10'
+
+# WRONG — bash will try history expansion
+gws sheets +read --spreadsheet ID --range "Sheet1!A1:D10"
+```
+
+**JSON in flags:** Use single quotes around `--params` and `--json` to preserve inner double quotes:
+```bash
+gws drive files list --params '{"pageSize": 10}'
+```
+
+---
+
+## Scope Management
+
+Unverified (testing mode) apps are limited to ~25 OAuth scopes. If you hit this limit:
+
+```bash
+# Login with specific scopes only
+gws auth login --scopes drive,gmail,sheets
+
+# Or use service-specific flag
+gws auth login -s drive,gmail,calendar
+```
+
+---
+
+## Headless / CI Authentication
+
+```bash
+# On a machine with browser — export credentials
+gws auth export --unmasked > credentials.json
+
+# On headless machine — use exported credentials
+export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/path/to/credentials.json
+gws gmail +triage
+```
+
+---
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | API error (Google 4xx/5xx response) |
+| 2 | Auth error (credentials missing/expired) |
+| 3 | Validation error (bad args, unknown service) |
+| 4 | Discovery error (API schema fetch failed) |
+| 5 | Internal error (unexpected failure) |
+
+---
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_WORKSPACE_CLI_TOKEN` | Pre-obtained OAuth2 access token (highest priority) |
+| `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` | Path to OAuth/service account JSON |
+| `GOOGLE_WORKSPACE_CLI_CLIENT_ID` | OAuth client ID (alt to client_secret.json) |
+| `GOOGLE_WORKSPACE_CLI_CLIENT_SECRET` | OAuth client secret |
+| `GOOGLE_WORKSPACE_CLI_ACCOUNT` | Default account email for multi-account |
+| `GOOGLE_WORKSPACE_CLI_CONFIG_DIR` | Override config dir (default: `~/.config/gws`) |
+| `GOOGLE_WORKSPACE_CLI_LOG` | Stderr log level (e.g. `gws=debug`) |
+
+Variables also load from `.env` file if present in the working directory.
+
+---
+
+## Official Persona Recipes
+
+gws ships with pre-built persona workflows that combine multiple services. These are
+useful patterns to follow when the user's request matches a persona:
+
+| Persona | Services Used | Key Workflow |
+|---------|--------------|--------------|
+| **Exec Assistant** | Gmail, Calendar, Drive, Chat | Morning standup → inbox triage → meeting prep → schedule management |
+| **Project Manager** | Sheets, Chat, Calendar, Tasks | Task tracking in Sheets → status updates in Chat → calendar blocking |
+| **IT Admin** | Admin, Reports, Licensing | User management → audit logs → permission reviews |
+| **Sales Ops** | Gmail, Sheets, Docs, Drive | CRM updates in Sheets → proposal generation in Docs → email follow-ups |
+| **Content Creator** | Docs, Drive, Slides, Gmail | Draft in Docs → organize in Drive → share via email |
+| **Team Lead** | Calendar, Chat, Tasks, Gmail | Weekly planning → team updates in Chat → task assignment |
+| **Researcher** | Drive, Docs, Sheets, Gmail | Collect sources in Drive → notes in Docs → data in Sheets |
+| **HR Coordinator** | Admin, Calendar, Gmail, Docs | Onboarding users → scheduling interviews → offer letter generation |
+| **Customer Support** | Gmail, Sheets, Chat, Tasks | Email triage → log in Sheets → escalate in Chat → track in Tasks |
+| **Event Coordinator** | Calendar, Gmail, Sheets, Forms | Schedule events → send invites → track RSVPs in Sheets |
+
+When a user's request aligns with one of these patterns, follow the workflow sequence.
+
+---
+
 ## Troubleshooting
 
 | Problem | Solution |
@@ -480,16 +647,21 @@ visibility and control over what's being executed.
 | "auth_method: none" | Run `gws auth login --account your@email.com` |
 | "This app isn't verified" | Click Advanced → Go to [project name] (unsafe) → Allow |
 | Wrong account used | Check `gws auth list`, set default with `gws auth default --account ...` |
-| API not enabled | Run `gws auth setup` to enable APIs in your GCP project |
+| API not enabled | gws prints enable URL in stderr — click link, wait 10s, retry |
+| "Access blocked" on login | Add account to OAuth consent screen test users |
+| `redirect_uri_mismatch` | OAuth client must be type "Desktop app" |
 | "Permission denied" on admin APIs | Need Workspace admin privileges |
 | Rate limited | Add `--page-delay` for pagination, reduce `pageSize` |
 | "Invalid grant" | Token expired — run `gws auth login` again |
+| `gcloud` not found for setup | Install gcloud, or set up OAuth manually in Cloud Console |
 
 ## Important Reminders
 
 - **Always `--dry-run` before write operations** — show the user what will happen
-- **Never send emails or delete files without explicit confirmation**
+- **Never send emails, delete files, or modify calendar without explicit confirmation**
+- **Never output secrets** (API keys, tokens) directly — use `gws auth export` instead
 - **Use `--format table`** when showing results to the user for readability
 - **Use helpers (`+send`, `+read`, `+append`, etc.)** when available — simpler and safer
 - **Use `gws schema`** to discover exact API parameters when unsure
 - **gws is for NOW, clasp is for LATER** — immediate actions vs persistent automations
+- **Single-quote shell strings** containing `!` (Sheets ranges) or JSON
