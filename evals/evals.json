@@ -1,0 +1,46 @@
+{
+  "skill_name": "gws",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "check my inbox for unread emails and show me a summary. if there's anything from someone important, help me draft a reply",
+      "expected_output": "Uses gws gmail +triage to list unread emails, presents them in table format, asks user which to reply to, then uses +read to get the message content and +reply with --dry-run before sending",
+      "files": [],
+      "expectations": [
+        "Uses 'gws gmail +triage' (not raw API) to list unread emails",
+        "Uses '--format table' for human-readable output",
+        "When replying, uses 'gws gmail +reply' helper (not raw API)",
+        "Uses '--dry-run' before actually sending the reply",
+        "Asks for user confirmation before sending",
+        "Uses 'gws gmail +read' to read the message content before composing reply"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "what meetings do I have this week? also check if there are unread emails mentioning any of those meetings",
+      "expected_output": "Uses gws calendar +agenda --week to show this week's events, then searches Gmail for related emails using meeting subjects/attendees as search queries",
+      "files": [],
+      "expectations": [
+        "Uses 'gws calendar +agenda' with '--week' flag (not raw API)",
+        "Uses '--format table' for calendar output",
+        "Searches Gmail using 'gws gmail +triage' with '--query' or raw API with search query",
+        "Cross-references meeting subjects or attendees in the email search",
+        "Does NOT attempt write operations without confirmation"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have a Google Sheet with sales data (spreadsheet ID: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms). Read the first 20 rows and then send a summary email to my manager at boss@example.com with the key numbers",
+      "expected_output": "Uses gws sheets +read to get the data, analyzes it, composes a summary, then uses gws gmail +send with --dry-run first before sending",
+      "files": [],
+      "expectations": [
+        "Uses 'gws sheets +read' helper with --spreadsheet and --range flags",
+        "Reads actual data before composing the email summary",
+        "Uses 'gws gmail +send' helper (not raw API) to send the email",
+        "Uses '--dry-run' before actually sending the email",
+        "Asks for user confirmation before sending",
+        "Email body contains actual data/numbers from the spreadsheet, not placeholders"
+      ]
+    }
+  ]
+}

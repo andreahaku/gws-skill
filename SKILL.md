@@ -3,35 +3,46 @@ name: gws
 description: >
   Interact with Google Workspace directly from the terminal using the gws CLI.
   This skill provides real-time access to Gmail, Google Drive, Sheets, Calendar,
-  Docs, Slides, Forms, Tasks, Chat, Contacts, and 15+ more Google APIs — all
+  Docs, Slides, Forms, Tasks, Chat, Contacts, and 25+ more Google APIs — all
   through a single unified CLI. MUST be consulted for ANY task that requires
   reading, writing, or managing data in Google Workspace services RIGHT NOW
   (not scheduled automations — use /clasp for those).
 
 
   ALWAYS trigger when the user wants to:
-  (1) Read, send, search, or triage Gmail (inbox summary, send email, find messages,
-  convert email to task, draft responses),
+  (1) Read, send, search, reply, forward, or triage Gmail (inbox summary, send email,
+  find messages, convert email to task, draft responses, reply to threads, attach files,
+  CC/BCC recipients),
   (2) Manage Google Drive files (upload, download, list, search, share, organize,
-  move, copy, delete files and folders),
+  move, copy, delete files and folders, export Google Docs as PDF),
   (3) Read or write Google Sheets data (read cells, append rows, update values,
   create spreadsheets, bulk data operations),
   (4) Manage Google Calendar (list events, create events, check availability,
-  meeting prep, agenda, free/busy lookup),
+  meeting prep, agenda, free/busy lookup, find open slots),
   (5) Create or edit Google Docs (append text, read document content),
   (6) Manage Google Tasks (create tasks, list tasks, mark complete, convert
   email to task),
   (7) Send messages to Google Chat spaces,
   (8) Read or manage Google Forms and responses,
   (9) Manage Google Slides presentations,
-  (10) Look up or manage contacts via People API,
+  (10) Look up or manage contacts via People API (find phone numbers, emails),
   (11) Run cross-service workflows (standup report, meeting prep, weekly digest,
-  email-to-task conversion, file announcements),
+  email-to-task conversion, file announcements, morning briefing),
   (12) Admin operations (user management, audit logs, licensing, groups),
   (13) Discover API schemas and capabilities for any Google service,
-  (14) Any request that says "check my email", "what's on my calendar",
-  "upload this to Drive", "add a row to my sheet", "send an email to X",
-  "what meetings do I have", "create a calendar event", "read my inbox".
+  (14) Any request that mentions "check my email", "what's on my calendar",
+  "upload this to Drive", "add a row to my sheet", "send an email to",
+  "what meetings do I have", "create a calendar event", "read my inbox",
+  "reply to that email", "forward this to", "triage my inbox", "fammi vedere
+  le email", "cosa ho in calendario", "agenda di oggi", "cerca nei contatti".
+
+
+  IMPORTANT — do NOT trigger for these (use other tools instead):
+  - Local .xlsx/.csv files (use Python/pandas, not gws)
+  - Building custom apps with Google OAuth (code, not CLI)
+  - Persistent automations, triggers, webhooks (use /clasp)
+  - Gmail filter rules that run automatically (use /clasp or Gmail settings)
+  - Web scraping piped to Google Sheets on a schedule (use /clasp)
 
 
   Key differentiator vs /clasp: gws is for IMMEDIATE, INTERACTIVE operations
@@ -82,12 +93,15 @@ Identify:
 
 ### 2. Execute
 
-Use the appropriate gws command. Prefer **helper commands** (`+send`, `+read`, `+append`, etc.) when available — they're simpler and handle encoding/formatting automatically.
+Use the appropriate gws command. Prefer **helper commands** when available — they're simpler and handle encoding/formatting automatically.
+
+**Always add `--format table`** when showing results to the user — it produces readable output instead of raw JSON. Only use `--format json` when you need to process the data programmatically.
 
 **IMPORTANT SAFETY RULES:**
 - **Always use `--dry-run` first** for write operations (send email, create event, delete file) and show the user what will happen
 - **Never send emails, delete files, or modify data without explicit user confirmation**
 - **For read-only operations** (list, get, search, triage), execute directly
+- **Never output secrets** (API keys, tokens) directly
 
 ---
 
@@ -97,36 +111,46 @@ Use the appropriate gws command. Prefer **helper commands** (`+send`, `+read`, `
 
 **Helpers:**
 ```bash
-# Send an email
+# Send an email (supports --cc, --bcc, --html, --from, -a/--attach)
 gws gmail +send --to alice@example.com --subject 'Hello' --body 'Hi Alice!'
-
-# Reply to a message
-gws gmail +reply --message-id MSG_ID --body 'Thanks for the update!'
-
-# Reply all
-gws gmail +reply-all --message-id MSG_ID --body 'Sounds good to me!'
-
-# Forward a message
-gws gmail +forward --message-id MSG_ID --to colleague@company.com
-
-# Triage inbox — show unread summary
-gws gmail +triage
+gws gmail +send --to alice@example.com --subject 'Report' --body 'See attached' -a report.pdf
+gws gmail +send --to alice@example.com --subject 'FYI' --body 'Hi' --cc bob@co.com --bcc eve@co.com
+gws gmail +send --to alice@example.com --subject 'News' --body '<b>Bold</b> text' --html
 
 # Read a specific message (extracts body, handles base64/multipart)
 gws gmail +read --id MSG_ID
 gws gmail +read --id MSG_ID --headers        # Include From, To, Subject, Date
 gws gmail +read --id MSG_ID --html           # Return HTML instead of plain text
 
-# Watch for new emails (streaming NDJSON)
-gws gmail +watch
+# Reply to a message (handles threading, quoting automatically)
+gws gmail +reply --message-id MSG_ID --body 'Thanks for the update!'
+gws gmail +reply --message-id MSG_ID --body 'Looping in Carol' --cc carol@example.com
+gws gmail +reply --message-id MSG_ID --body '<b>Bold reply</b>' --html
+gws gmail +reply --message-id MSG_ID --body 'Updated version' -a updated.docx
+
+# Reply all (same flags as +reply, plus --remove to exclude recipients)
+gws gmail +reply-all --message-id MSG_ID --body 'Sounds good to me!'
+gws gmail +reply-all --message-id MSG_ID --body 'Updated' --remove bob@example.com
+
+# Forward a message
+gws gmail +forward --message-id MSG_ID --to colleague@company.com
+gws gmail +forward --message-id MSG_ID --to dave@co.com --body 'FYI see below'
+gws gmail +forward --message-id MSG_ID --to dave@co.com -a extra-notes.pdf
+
+# Triage inbox — show unread summary
+gws gmail +triage
+gws gmail +triage --max 5 --query 'from:boss'
+gws gmail +triage --labels                   # Include label names
+
+# Watch for new emails (streaming NDJSON, requires GCP project for Pub/Sub)
+gws gmail +watch --project my-gcp-project
+gws gmail +watch --project my-project --once --cleanup
 ```
 
 **Raw API:**
 ```bash
-# List messages
+# List/search messages
 gws gmail users messages list --params '{"userId": "me", "maxResults": 10}'
-
-# Search messages
 gws gmail users messages list --params '{"userId": "me", "q": "from:boss@company.com is:unread"}'
 
 # Get a specific message
@@ -143,7 +167,7 @@ gws gmail users getProfile --params '{"userId": "me"}'
 
 **Helpers:**
 ```bash
-# Upload a file
+# Upload a file (MIME type detected automatically)
 gws drive +upload ./report.pdf
 gws drive +upload ./report.pdf --parent FOLDER_ID --name 'Q4 Report.pdf'
 ```
@@ -173,6 +197,9 @@ gws drive permissions create --params '{"fileId": "FILE_ID"}' --json '{"role": "
 
 # List files in a specific folder
 gws drive files list --params '{"q": "'\''FOLDER_ID'\'' in parents", "pageSize": 50}'
+
+# Export Google Doc as PDF
+gws drive files export --params '{"fileId": "FILE_ID", "mimeType": "application/pdf"}' --output ./doc.pdf
 ```
 
 ### Google Sheets
@@ -211,18 +238,22 @@ gws sheets spreadsheets create --json '{"properties": {"title": "My Sheet"}}'
 
 **Helpers:**
 ```bash
-# Show today's agenda (uses account timezone, cached 24h)
-gws calendar +agenda
-
-# Show agenda with specific timezone
-gws calendar +agenda --timezone Europe/Rome
+# Show agenda (uses account timezone by default)
+gws calendar +agenda                         # upcoming events
+gws calendar +agenda --today                 # today only
+gws calendar +agenda --tomorrow              # tomorrow only
+gws calendar +agenda --week                  # this week
+gws calendar +agenda --days 3                # next 3 days
+gws calendar +agenda --calendar 'Work'       # specific calendar
 
 # Create an event
 gws calendar +insert --summary 'Team Standup' \
   --start '2026-03-24T09:00:00+01:00' \
   --end '2026-03-24T09:30:00+01:00' \
   --attendee alice@example.com \
-  --location 'Room 3'
+  --location 'Room 3' \
+  --description 'Weekly sync'
+# Use --calendar ID to target a specific calendar (default: primary)
 ```
 
 **Raw API:**
@@ -241,6 +272,9 @@ gws calendar freebusy query --json '{"timeMin": "2026-03-24T08:00:00Z", "timeMax
 
 # List calendars
 gws calendar calendarList list
+
+# Quick add (natural language)
+gws calendar events quickAdd --params '{"calendarId": "primary", "text": "Lunch with Alice tomorrow at noon"}'
 ```
 
 ### Google Docs
@@ -328,14 +362,11 @@ gws people people searchContacts --params '{"query": "Alice", "readMask": "names
 **Helpers:**
 ```bash
 # Push local files to an Apps Script project (replaces all remote files)
-gws script +push --script-id SCRIPT_ID --dir ./src
+gws script +push --script SCRIPT_ID --dir ./src
 ```
 
 **Raw API:**
 ```bash
-# List Apps Script projects
-gws apps-script projects list
-
 # Get project content
 gws apps-script projects getContent --params '{"scriptId": "SCRIPT_ID"}'
 
@@ -347,48 +378,51 @@ gws apps-script scripts run --params '{"scriptId": "SCRIPT_ID"}' --json '{"funct
 
 **Helpers:**
 ```bash
-# Subscribe to Workspace events (streaming NDJSON)
-gws events +subscribe
+# Subscribe to Workspace events (streaming NDJSON, requires GCP project)
+gws events +subscribe --target '//chat.googleapis.com/spaces/SPACE' \
+  --event-types 'google.workspace.chat.message.v1.created' --project my-project
 
 # Renew/reactivate subscriptions
-gws events +renew
+gws events +renew --name subscriptions/SUB_ID
+gws events +renew --all --within 2d
 ```
 
-### Google Keep
+### Model Armor (Content Safety)
 
+**Helpers for screening AI prompts/responses through safety templates:**
 ```bash
-# List notes
-gws keep notes list
+# Sanitize a user prompt
+gws modelarmor +sanitize-prompt --template projects/P/locations/L/templates/T --text 'user input'
 
-# Get a note
-gws keep notes get --params '{"name": "notes/NOTE_ID"}'
+# Sanitize a model response
+gws modelarmor +sanitize-response --template projects/P/locations/L/templates/T --text 'model output'
+
+# Create a safety template
+gws modelarmor +create-template --project P --location us-central1 --template-id my-tmpl --preset jailbreak
 ```
 
-### Google Meet
-
+Any gws command can also screen its response through Model Armor using the global `--sanitize` flag:
 ```bash
-# List conference records
-gws meet conferenceRecords list
-
-# Get meeting details
-gws meet conferenceRecords get --params '{"name": "conferenceRecords/REC_ID"}'
+gws gmail +triage --sanitize projects/P/locations/L/templates/T
 ```
 
-### Admin (Workspace Admin)
+### Additional Services
 
-```bash
-# List users
-gws admin users list --params '{"domain": "company.com", "maxResults": 50}'
+These services are available via raw API (`gws <service> <resource> <method>`). Use `gws schema` to discover parameters:
 
-# Get user info
-gws admin users get --params '{"userKey": "user@company.com"}'
-
-# List groups
-gws admin groups list --params '{"domain": "company.com"}'
-
-# Audit logs
-gws admin-reports activities list --params '{"userKey": "all", "applicationName": "login"}'
-```
+| Service | Alias | What it does |
+|---------|-------|-------------|
+| `google-keep` | `keep` | Notes and lists |
+| `meet` | — | Conference records and meeting details |
+| `admin` | `directory` | Users, groups, devices, org units |
+| `admin-reports` | `reports` | Audit logs, usage reports |
+| `vault` | — | eDiscovery matters and holds |
+| `classroom` | — | Courses, invitations, user profiles |
+| `cloudidentity` | — | Identity, devices, groups, SSO profiles |
+| `alertcenter` | — | Security alerts and notifications |
+| `groupssettings` | — | Group access settings |
+| `licensing` | — | License assignments |
+| `reseller` | — | Customer and subscription management |
 
 ---
 
@@ -501,7 +535,7 @@ gws drive permissions create --params '{"fileId": "FILE_ID"}' --json '{"role": "
 ```bash
 # Read data
 gws sheets +read --spreadsheet ID --range 'Sheet1!A1:D10' --format table
-# Send summary
+# Send summary (confirm with user first!)
 gws gmail +send --to boss@company.com --subject 'Weekly Summary' --body 'Here are the numbers...'
 ```
 
@@ -518,14 +552,17 @@ gws gmail +triage --format table
 gws can also run as an MCP server, giving Claude direct tool access to Google APIs:
 
 ```bash
-# Start MCP with selected services
+# Start MCP with selected services (full mode — one tool per API method)
 gws mcp -s drive,gmail,calendar,sheets
+
+# Compact mode — one tool per service + discover tool
+gws mcp -s drive,gmail,calendar --tool-mode compact
+
+# Include workflow helpers and service helpers as tools
+gws mcp -s drive,gmail,calendar -w -e
 
 # Start with all services
 gws mcp -s all
-
-# Include workflow helpers
-gws mcp -s drive,gmail,calendar -w -e
 ```
 
 To configure in Claude Code settings, add to `mcpServers`:
@@ -546,13 +583,13 @@ visibility and control over what's being executed.
 
 ## Shell Gotchas
 
-**Sheets ranges with `!`:** Bash/zsh interpret `!` as history expansion. Always use single quotes:
+**Sheets ranges with `!`:** zsh interprets `!` as history expansion. Use double quotes for ranges:
 ```bash
-# CORRECT
-gws sheets +read --spreadsheet ID --range 'Sheet1!A1:D10'
-
-# WRONG — bash will try history expansion
+# CORRECT (zsh-safe)
 gws sheets +read --spreadsheet ID --range "Sheet1!A1:D10"
+
+# MAY FAIL in zsh — ! triggers history expansion
+gws sheets +read --spreadsheet ID --range 'Sheet1!A1:D10'
 ```
 
 **JSON in flags:** Use single quotes around `--params` and `--json` to preserve inner double quotes:
@@ -625,16 +662,16 @@ useful patterns to follow when the user's request matches a persona:
 
 | Persona | Services Used | Key Workflow |
 |---------|--------------|--------------|
-| **Exec Assistant** | Gmail, Calendar, Drive, Chat | Morning standup → inbox triage → meeting prep → schedule management |
-| **Project Manager** | Sheets, Chat, Calendar, Tasks | Task tracking in Sheets → status updates in Chat → calendar blocking |
-| **IT Admin** | Admin, Reports, Licensing | User management → audit logs → permission reviews |
-| **Sales Ops** | Gmail, Sheets, Docs, Drive | CRM updates in Sheets → proposal generation in Docs → email follow-ups |
-| **Content Creator** | Docs, Drive, Slides, Gmail | Draft in Docs → organize in Drive → share via email |
-| **Team Lead** | Calendar, Chat, Tasks, Gmail | Weekly planning → team updates in Chat → task assignment |
-| **Researcher** | Drive, Docs, Sheets, Gmail | Collect sources in Drive → notes in Docs → data in Sheets |
-| **HR Coordinator** | Admin, Calendar, Gmail, Docs | Onboarding users → scheduling interviews → offer letter generation |
-| **Customer Support** | Gmail, Sheets, Chat, Tasks | Email triage → log in Sheets → escalate in Chat → track in Tasks |
-| **Event Coordinator** | Calendar, Gmail, Sheets, Forms | Schedule events → send invites → track RSVPs in Sheets |
+| **Exec Assistant** | Gmail, Calendar, Drive, Chat | Morning standup -> inbox triage -> meeting prep -> schedule management |
+| **Project Manager** | Sheets, Chat, Calendar, Tasks | Task tracking in Sheets -> status updates in Chat -> calendar blocking |
+| **IT Admin** | Admin, Reports, Licensing | User management -> audit logs -> permission reviews |
+| **Sales Ops** | Gmail, Sheets, Docs, Drive | CRM updates in Sheets -> proposal generation in Docs -> email follow-ups |
+| **Content Creator** | Docs, Drive, Slides, Gmail | Draft in Docs -> organize in Drive -> share via email |
+| **Team Lead** | Calendar, Chat, Tasks, Gmail | Weekly planning -> team updates in Chat -> task assignment |
+| **Researcher** | Drive, Docs, Sheets, Gmail | Collect sources in Drive -> notes in Docs -> data in Sheets |
+| **HR Coordinator** | Admin, Calendar, Gmail, Docs | Onboarding users -> scheduling interviews -> offer letter generation |
+| **Customer Support** | Gmail, Sheets, Chat, Tasks | Email triage -> log in Sheets -> escalate in Chat -> track in Tasks |
+| **Event Coordinator** | Calendar, Gmail, Sheets, Forms | Schedule events -> send invites -> track RSVPs in Sheets |
 
 When a user's request aligns with one of these patterns, follow the workflow sequence.
 
@@ -645,7 +682,7 @@ When a user's request aligns with one of these patterns, follow the workflow seq
 | Problem | Solution |
 |---------|----------|
 | "auth_method: none" | Run `gws auth login --account your@email.com` |
-| "This app isn't verified" | Click Advanced → Go to [project name] (unsafe) → Allow |
+| "This app isn't verified" | Click Advanced -> Go to [project name] (unsafe) -> Allow |
 | Wrong account used | Check `gws auth list`, set default with `gws auth default --account ...` |
 | API not enabled | gws prints enable URL in stderr — click link, wait 10s, retry |
 | "Access blocked" on login | Add account to OAuth consent screen test users |
@@ -661,7 +698,8 @@ When a user's request aligns with one of these patterns, follow the workflow seq
 - **Never send emails, delete files, or modify calendar without explicit confirmation**
 - **Never output secrets** (API keys, tokens) directly — use `gws auth export` instead
 - **Use `--format table`** when showing results to the user for readability
-- **Use helpers (`+send`, `+read`, `+append`, etc.)** when available — simpler and safer
+- **Use helpers** (`+send`, `+read`, `+reply`, `+forward`, `+triage`, `+append`, etc.) when available — simpler and safer
 - **Use `gws schema`** to discover exact API parameters when unsure
 - **gws is for NOW, clasp is for LATER** — immediate actions vs persistent automations
-- **Single-quote shell strings** containing `!` (Sheets ranges) or JSON
+- **Single-quote JSON**, double-quote shell strings containing `!` (Sheets ranges)
+- For bugs or feature requests: https://github.com/googleworkspace/cli/issues

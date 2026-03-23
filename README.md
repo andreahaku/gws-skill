@@ -4,7 +4,7 @@ A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill for intera
 
 ## What it does
 
-This skill gives Claude Code real-time access to the entire Google Workspace ecosystem — Gmail, Drive, Sheets, Calendar, Docs, Tasks, Chat, Forms, Slides, Contacts, Admin, and more. Unlike scripting tools, gws executes operations immediately: read your email, upload files, create events, update spreadsheets — all from a single prompt.
+This skill gives Claude Code real-time access to the entire Google Workspace ecosystem — Gmail, Drive, Sheets, Calendar, Docs, Tasks, Chat, Forms, Slides, Contacts, Admin, Model Armor, and 25+ more services. Unlike scripting tools, gws executes operations immediately: read your email, upload files, create events, update spreadsheets — all from a single prompt.
 
 ### gws vs clasp
 
@@ -19,18 +19,19 @@ These skills are complementary:
 
 ## What's included
 
-- **Complete service reference** for 15+ Google APIs with helper commands and raw API examples
+- **Complete service reference** for 25+ Google APIs with helper commands and raw API examples
 - **Cross-service workflows** — standup reports, meeting prep, weekly digests, email-to-task
 - **API discovery** via `gws schema` for finding exact parameters
 - **Safety rules** — dry-run before writes, user confirmation before sends/deletes
 - **Multi-account support** — switch between personal and work accounts
-- **MCP server configuration** — optional direct API access mode for Claude Code
+- **MCP server configuration** — optional direct API access mode for Claude Code (with `--tool-mode compact|full`)
 - **Output format control** — JSON, table, YAML, CSV
+- **Model Armor integration** — content safety screening for AI prompts/responses
 
 ## Prerequisites
 
 1. **Node.js** >= 20.0.0
-2. **gws CLI** installed globally:
+2. **gws CLI** >= 0.18.1 installed globally:
    ```bash
    npm install -g @googleworkspace/cli
    ```
@@ -89,10 +90,10 @@ Claude will use gws to query your Gmail directly.
 
 | Service | Helpers | Key Operations |
 |---------|---------|---------------|
-| **Gmail** | `+send`, `+triage`, `+watch` | Send, search, read, label emails |
-| **Drive** | `+upload` | Upload, download, search, share, organize files |
+| **Gmail** | `+send`, `+read`, `+reply`, `+reply-all`, `+forward`, `+triage`, `+watch` | Send, read, reply, forward, search, triage emails (with CC/BCC, HTML, attachments) |
+| **Drive** | `+upload` | Upload, download, search, share, organize, export files |
 | **Sheets** | `+read`, `+append` | Read ranges, append rows, update values |
-| **Calendar** | `+agenda`, `+insert` | List events, create events, check availability |
+| **Calendar** | `+agenda`, `+insert` | List events (today/week/N days), create events, check availability |
 | **Docs** | `+write` | Read and append to documents |
 | **Tasks** | — | Create, list, complete tasks |
 | **Chat** | `+send` | Send messages to spaces |
@@ -100,6 +101,9 @@ Claude will use gws to query your Gmail directly.
 | **Slides** | — | Read and create presentations |
 | **People** | — | Search and manage contacts |
 | **Admin** | — | User/group management, audit logs |
+| **Apps Script** | `+push` | Push local files to Apps Script projects |
+| **Events** | `+subscribe`, `+renew` | Stream Workspace events via Pub/Sub |
+| **Model Armor** | `+sanitize-prompt`, `+sanitize-response`, `+create-template` | Content safety screening for AI |
 
 ### Cross-Service Workflows
 

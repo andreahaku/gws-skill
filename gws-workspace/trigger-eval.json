@@ -1,0 +1,82 @@
+[
+  {
+    "query": "ho tipo 200 email non lette, fammi un riassunto della inbox e dimmi se c'è qualcosa di urgente da un cliente o dal mio capo marco@acmecorp.it",
+    "should_trigger": true
+  },
+  {
+    "query": "check my calendar for next week, I need to find a 2-hour slot on tuesday or wednesday afternoon for a meeting with the design team. also check if anyone from the team emailed me about availability",
+    "should_trigger": true
+  },
+  {
+    "query": "upload the Q1 report I just saved at ~/Documents/q1-report-2026.pdf to the 'Finance Reports' folder in my Google Drive and share it with sarah@company.com as viewer",
+    "should_trigger": true
+  },
+  {
+    "query": "leggi il foglio Google Sheets con i dati delle vendite (id: 1abc123def) e aggiungici una riga con i numeri di oggi: Prodotto A, 150 unità, €12,500",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to reply to the email from john about the project deadline — his message ID is 19d1b97e694ce208. tell him we need 2 more weeks and cc my manager at boss@company.com",
+    "should_trigger": true
+  },
+  {
+    "query": "send an email to the whole team (alice@co.com, bob@co.com, carol@co.com) with the meeting notes I have in /tmp/notes.md — attach the file too. subject should be 'Sprint 12 Retro Notes'",
+    "should_trigger": true
+  },
+  {
+    "query": "what's on my agenda today? I'm in Rome so use Europe/Rome timezone. also create a reminder event at 5pm called 'Pick up dry cleaning'",
+    "should_trigger": true
+  },
+  {
+    "query": "cerca nei miei contatti Google il numero di telefono di Alessandro Bianchi, mi serve per chiamarlo",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to set up a standup routine — every morning I want to see my calendar, unread emails, and open tasks in one view. can you run the standup workflow?",
+    "should_trigger": true
+  },
+  {
+    "query": "forward the email about the Malta trip (the one from booking.com) to my wife at maria@gmail.com and add a note saying 'here are our hotel details'",
+    "should_trigger": true
+  },
+  {
+    "query": "write a python script that reads data from a CSV file at ./sales.csv, calculates monthly totals, and generates a matplotlib bar chart saved as chart.png",
+    "should_trigger": false
+  },
+  {
+    "query": "I want to build a Google Form that automatically sends a personalized email to each respondent when they submit — the form should have 5 questions about customer satisfaction and run on a weekly trigger",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a webhook endpoint that listens for Stripe payment notifications and logs each payment to a Google Sheet automatically every time someone pays",
+    "should_trigger": false
+  },
+  {
+    "query": "my react native app crashes on iOS when I try to open the camera — here's the stack trace from Xcode. can you figure out what's wrong?",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to migrate our Postgres database from Heroku to AWS RDS, can you help me plan the migration steps and write the terraform config?",
+    "should_trigger": false
+  },
+  {
+    "query": "help me set up a cron job on my mac that runs every Monday at 8am and sends me a Slack message with a summary of my week",
+    "should_trigger": false
+  },
+  {
+    "query": "create a Next.js API route that authenticates with Google OAuth and fetches the user's calendar events — I want to build a custom dashboard UI",
+    "should_trigger": false
+  },
+  {
+    "query": "I have a spreadsheet saved locally as an .xlsx file at ~/Downloads/budget.xlsx — can you read it and tell me the total in column D?",
+    "should_trigger": false
+  },
+  {
+    "query": "configure my Gmail filters so that all emails from newsletters go to a label called 'Newsletters' and skip the inbox — I want this to run automatically going forward",
+    "should_trigger": false
+  },
+  {
+    "query": "scrape the product prices from https://example-store.com/products and save them to a Google Sheet every day — I need price tracking over time",
+    "should_trigger": false
+  }
+]
