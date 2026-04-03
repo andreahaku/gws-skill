@@ -1,56 +1,11 @@
 ---
 name: gws
 description: >
-  Interact with Google Workspace directly from the terminal using the gws CLI.
-  This skill provides real-time access to Gmail, Google Drive, Sheets, Calendar,
-  Docs, Slides, Forms, Tasks, Chat, Contacts, and 25+ more Google APIs — all
-  through a single unified CLI. MUST be consulted for ANY task that requires
-  reading, writing, or managing data in Google Workspace services RIGHT NOW
-  (not scheduled automations — use /clasp for those).
-
-
-  ALWAYS trigger when the user wants to:
-  (1) Read, send, search, reply, forward, or triage Gmail (inbox summary, send email,
-  find messages, convert email to task, draft responses, reply to threads, attach files,
-  CC/BCC recipients),
-  (2) Manage Google Drive files (upload, download, list, search, share, organize,
-  move, copy, delete files and folders, export Google Docs as PDF),
-  (3) Read or write Google Sheets data (read cells, append rows, update values,
-  create spreadsheets, bulk data operations),
-  (4) Manage Google Calendar (list events, create events, check availability,
-  meeting prep, agenda, free/busy lookup, find open slots),
-  (5) Create or edit Google Docs (append text, read document content),
-  (6) Manage Google Tasks (create tasks, list tasks, mark complete, convert
-  email to task),
-  (7) Send messages to Google Chat spaces,
-  (8) Read or manage Google Forms and responses,
-  (9) Manage Google Slides presentations,
-  (10) Look up or manage contacts via People API (find phone numbers, emails),
-  (11) Run cross-service workflows (standup report, meeting prep, weekly digest,
-  email-to-task conversion, file announcements, morning briefing),
-  (12) Admin operations (user management, audit logs, licensing, groups),
-  (13) Discover API schemas and capabilities for any Google service,
-  (14) Any request that mentions "check my email", "what's on my calendar",
-  "upload this to Drive", "add a row to my sheet", "send an email to",
-  "what meetings do I have", "create a calendar event", "read my inbox",
-  "reply to that email", "forward this to", "triage my inbox", "fammi vedere
-  le email", "cosa ho in calendario", "agenda di oggi", "cerca nei contatti".
-
-
-  IMPORTANT — do NOT trigger for these (use other tools instead):
-  - Local .xlsx/.csv files (use Python/pandas, not gws)
-  - Building custom apps with Google OAuth (code, not CLI)
-  - Persistent automations, triggers, webhooks (use /clasp)
-  - Gmail filter rules that run automatically (use /clasp or Gmail settings)
-  - Web scraping piped to Google Sheets on a schedule (use /clasp)
-
-
-  Key differentiator vs /clasp: gws is for IMMEDIATE, INTERACTIVE operations
-  (read my email now, upload this file now, check my calendar now). /clasp is
-  for PERSISTENT AUTOMATIONS that run on Google's servers (weekly triggers,
-  webhooks, form generators). If the user wants to DO something in Google
-  Workspace right now, use /gws. If they want to BUILD something that runs
-  on a schedule, use /clasp.
+  Google Workspace CLI for immediate, interactive operations on Gmail, Drive, Sheets,
+  Calendar, Docs, Tasks, Contacts, and 25+ Google APIs. Use for any "do it now" Google
+  task: read/send email, check calendar, upload to Drive, edit Sheets, manage contacts.
+  NOT for scheduled automations (use /clasp). Triggers: "check my email", "calendar today",
+  "upload to Drive", "send email", "agenda", "inbox", "contatti", any Google service interaction.
 argument-hint: "<what-to-do> (e.g. 'check my calendar for today')"
 allowed-tools: Bash(gws:*), Read, Write, Edit, Glob, Grep
 ---
