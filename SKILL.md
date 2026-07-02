@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: gws
 description: >
   Google Workspace CLI for immediate, interactive operations on Gmail, Drive, Sheets,
